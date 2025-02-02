@@ -7,3 +7,4 @@ seaborn==0.13.2
 transformers==4.48.2
 speechbrain==1.0.2
 kagglehub==0.3.7
+pyarrow>=14.0.1

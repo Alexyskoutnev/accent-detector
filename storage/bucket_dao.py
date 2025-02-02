@@ -5,17 +5,35 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class BucketDAO:
+    """
+    Data Access Object (DAO) for bucket storage operations.
+    
+    Provides a unified interface for:
+    - Uploading/downloading files and directories
+    - Reading file contents
+    - Managing concurrent operations
+    - Handling both local and cloud storage
+    - This bucket dao can work with any storage service that provides an S3-like API.
+    """
     def __init__(
         self,
         bucket: Any,  # Can be a mock or real S3 bucket object
         max_workers: int = 16,
         chunk_size: int = 100,
     ):
+        """Initialize storage access with configurable concurrency settings."""
         self._bucket = bucket
         self.max_workers = max_workers  # tunable based on hardware constraints
         self.chunk_size = chunk_size  # tunable based on network constraints
 
     def _upload_files(self, files: list[tuple[str | Path, str]]):
+        """
+        Uploads multiple files concurrently in chunks.
+        
+        Handles:
+        - Concurrent upload operations
+        - Chunked processing for large file sets
+        """
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for i in range(0, len(files), self.chunk_size):
                 chunk = files[i : i + self.chunk_size]
@@ -39,6 +57,13 @@ class BucketDAO:
             raise
 
     def _download_files(self, files: list[tuple[str, str | Path]]):
+        """
+        Downloads multiple files concurrently in chunks.
+        
+        Handles:
+        - Concurrent download operations
+        - Chunked processing for large file sets
+        """
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for i in range(0, len(files), self.chunk_size):
                 chunk = files[i : i + self.chunk_size]
@@ -62,8 +87,19 @@ class BucketDAO:
             raise
 
     def upload_dir(
-        self, local_dir: str | Path, prefix: str = "", patterns: list[str] = None
+        self, 
+        local_dir: str | Path, 
+        prefix: str = "", 
+        patterns: list[str] = None
     ):
+        """
+        Uploads an entire directory to storage.
+        
+        Handles:
+        - Optional file pattern filtering ["*.wav", "*.txt"]
+        - Preserves directory structure
+        - Concurrent uploads
+        """
         local_dir = Path(local_dir)
         if not local_dir.is_dir():
             raise ValueError(f"Not a directory: {local_dir}")
@@ -84,6 +120,14 @@ class BucketDAO:
     def download_dir(
         self, prefix: str, local_dir: str | Path, patterns: list[str] = None
     ):
+        """
+        Downloads a directory structure from storage.
+    
+        Handles:
+        - Optional file pattern filtering ["*.wav", "*.txt"]
+        - Creates local directory structure
+        - Concurrent downloads
+        """
         local_dir = Path(local_dir)
         local_dir.mkdir(parents=True, exist_ok=True)
         response = self._bucket.list_objects(
@@ -113,6 +157,14 @@ class BucketDAO:
             return None
 
     def read(self, keys: list[str]) -> Iterable[bytes]:
+        """
+        Reads multiple objects from storage concurrently.
+
+        Features:
+        - Concurrent content retrieval
+        - Chunked processing
+        - Yields contents as they become available (this is useful for streaming data and get high throughput in ML pipeline)
+        """
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for i in range(0, len(keys), self.chunk_size):
                 chunk = keys[i : i + self.chunk_size]
