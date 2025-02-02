@@ -19,9 +19,9 @@ class EvalStats:
     false_positives: int = 0
     true_negatives: int = 0
     false_negatives: int = 0
-    low_confidence_count: int = 0 # number of low confidence predictions
-    total_confidence_score: float = 0.0 # sum of all confidence scores
-    
+    low_confidence_count: int = 0  # number of low confidence predictions
+    total_confidence_score: float = 0.0  # sum of all confidence scores
+
     @property
     def average_confidence_score(self) -> float:
         return self.total_confidence_score / self.total if self.total > 0 else 0.0
@@ -41,15 +41,15 @@ class EvalStats:
         if self.precision == 0 or self.recall == 0:
             return 0.0
         return 2 * (self.precision * self.recall) / (self.precision + self.recall)
-    
+
     @property
     def total_filipino_accents(self) -> int:
         return self.true_positives + self.false_negatives
-    
+
     @property
     def total_non_filipino_accents(self) -> int:
         return self.true_negatives + self.false_positives
-    
+
     @property
     def class_distribution(self) -> str:
         total = self.total
@@ -92,7 +92,7 @@ class EvalStats:
             "f1_score": self.f1_score,
             "total_filipino_accent": self.total_filipino_accents,
             "total_non_filipino_accent": self.total_non_filipino_accents,
-            "average_confidence_score": self.average_confidence_score, 
+            "average_confidence_score": self.average_confidence_score,
             "low_confidence_count": self.low_confidence_count,
         }
         return base_dict
@@ -162,7 +162,9 @@ class AccentEvaluator:
         return native_language.lower() == cls.target_accent.lower()
 
     @classmethod
-    def _create_batch_stats(cls, eval_results: list[tuple[int, int, int, int, int, int, int, int, float]]) -> EvalStats:
+    def _create_batch_stats(
+        cls, eval_results: list[tuple[int, int, int, int, int, int, int, int, float]]
+    ) -> EvalStats:
         total = sum(r[0] for r in eval_results)
         correct = sum(r[1] for r in eval_results)
         return EvalStats(
@@ -191,14 +193,15 @@ class AccentEvaluator:
             false_positives=current.false_positives + new.false_positives,
             true_negatives=current.true_negatives + new.true_negatives,
             false_negatives=current.false_negatives + new.false_negatives,
-            low_confidence_count=current.low_confidence_count + new.low_confidence_count,
-            total_confidence_score=current.total_confidence_score + new.total_confidence_score,
+            low_confidence_count=current.low_confidence_count
+            + new.low_confidence_count,
+            total_confidence_score=current.total_confidence_score
+            + new.total_confidence_score,
         )
 
     @classmethod
     def _place_on_cpu(
-        cls,
-        model_outputs: tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[str]]
+        cls, model_outputs: tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[str]]
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[str], torch.Tensor]:
         prob, score, index, labels, confidence_flags = model_outputs
         return (
@@ -208,11 +211,13 @@ class AccentEvaluator:
             labels,
             confidence_flags.cpu(),
         )
-    
+
     @classmethod
     def evaluate(
         cls,
-        model_outputs: tuple[torch.Tensor, torch.Tensor, torch.Tensor, list[str], torch.Tensor],
+        model_outputs: tuple[
+            torch.Tensor, torch.Tensor, torch.Tensor, list[str], torch.Tensor
+        ],
         batch_metadata: pd.DataFrame,
     ) -> tuple[EvalStats, EvalStats]:
         # put on CPU if on GPU
@@ -220,17 +225,16 @@ class AccentEvaluator:
             model_outputs = cls._place_on_cpu(model_outputs)
         _, scores, _, predicted_labels, confidence_flags = model_outputs
         prediction_pairs = zip(
-            predicted_labels, 
+            predicted_labels,
             batch_metadata.itertuples(),
             confidence_flags.bool().tolist(),
-            scores.tolist()
+            scores.tolist(),
         )
         eval_results = [cls._evaluate_prediction(pair) for pair in prediction_pairs]
         batch_stats = cls._create_batch_stats(eval_results)
         updated_stats = cls._combine_stats(cls._running_stats, batch_stats)
         cls._running_stats = updated_stats
         return batch_stats, updated_stats
-
 
     @classmethod
     def get_running_stats(cls) -> EvalStats:
@@ -266,7 +270,7 @@ class ModelEvaluationHelpers:
         plt.xlabel("Predicted Label")
 
         if save_path:
-            plt.savefig(save_path, bbox_inches='tight')
+            plt.savefig(save_path, bbox_inches="tight")
             plt.close()
         else:
             plt.show()
@@ -290,7 +294,7 @@ class ModelEvaluationHelpers:
         plt.grid(True)
 
         if save_path:
-            plt.savefig(save_path, bbox_inches='tight')
+            plt.savefig(save_path, bbox_inches="tight")
             plt.close()
         else:
             plt.show()
@@ -308,7 +312,7 @@ class ModelEvaluationHelpers:
         plt.legend()
         plt.grid(True)
         if save_path:
-            plt.savefig(save_path, bbox_inches='tight')
+            plt.savefig(save_path, bbox_inches="tight")
             plt.close()
         else:
             plt.show()

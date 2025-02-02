@@ -17,7 +17,7 @@ RAW_DATA_DIR_FROM_HUGGINGFACE = "raw_data"
 class AudioDataPreprocessor:
     """
     Preprocesses audio files for accent detection model training and inference.
-    
+
     This preprocessor:
     - Loads and validates speaker metadata from CSV
     - Processes audio files in batches to manage memory efficiently
@@ -26,6 +26,7 @@ class AudioDataPreprocessor:
         * Mono channel
         * Normalized and padded tensors
     """
+
     required_columns: ClassVar[tuple[str]] = (
         "filename",
         "file_missing?",
@@ -36,8 +37,10 @@ class AudioDataPreprocessor:
     audio_subdir: ClassVar[str] = (
         f"{RAW_DATA_DIR_FROM_HUGGINGFACE}/recordings/recordings"
     )
-    batch_size: ClassVar[int] = 4 # tunable hyperparameter based on available memory or GPU
-    target_sample_rate: ClassVar[int] = 16000 # required by XLSR model
+    batch_size: ClassVar[int] = (
+        4  # tunable hyperparameter based on available memory or GPU
+    )
+    target_sample_rate: ClassVar[int] = 16000  # required by XLSR model
     device: ClassVar[str] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     @classmethod

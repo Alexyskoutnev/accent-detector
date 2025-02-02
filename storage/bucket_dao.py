@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 class BucketDAO:
     """
     Data Access Object (DAO) for bucket storage operations.
-    
+
     Provides a unified interface for:
     - Uploading/downloading files and directories
     - Reading file contents
@@ -15,6 +15,7 @@ class BucketDAO:
     - Handling both local and cloud storage
     - This bucket dao can work with any storage service that provides an S3-like API.
     """
+
     def __init__(
         self,
         bucket: Any,  # Can be a mock or real S3 bucket object
@@ -29,7 +30,7 @@ class BucketDAO:
     def _upload_files(self, files: list[tuple[str | Path, str]]):
         """
         Uploads multiple files concurrently in chunks.
-        
+
         Handles:
         - Concurrent upload operations
         - Chunked processing for large file sets
@@ -59,7 +60,7 @@ class BucketDAO:
     def _download_files(self, files: list[tuple[str, str | Path]]):
         """
         Downloads multiple files concurrently in chunks.
-        
+
         Handles:
         - Concurrent download operations
         - Chunked processing for large file sets
@@ -87,14 +88,11 @@ class BucketDAO:
             raise
 
     def upload_dir(
-        self, 
-        local_dir: str | Path, 
-        prefix: str = "", 
-        patterns: list[str] = None
+        self, local_dir: str | Path, prefix: str = "", patterns: list[str] = None
     ):
         """
         Uploads an entire directory to storage.
-        
+
         Handles:
         - Optional file pattern filtering ["*.wav", "*.txt"]
         - Preserves directory structure
@@ -122,7 +120,7 @@ class BucketDAO:
     ):
         """
         Downloads a directory structure from storage.
-    
+
         Handles:
         - Optional file pattern filtering ["*.wav", "*.txt"]
         - Creates local directory structure

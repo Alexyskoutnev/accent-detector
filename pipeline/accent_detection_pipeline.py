@@ -18,9 +18,7 @@ from storage.bucket_dao import BucketDAO
 
 class AccentDetectionPipeline:
 
-    def __init__(self, 
-                 bucket_dao: BucketDAO, 
-                 output_dir: str = "results"):
+    def __init__(self, bucket_dao: BucketDAO, output_dir: str = "results"):
         self.bucket_dao = bucket_dao
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -59,7 +57,6 @@ class AccentDetectionPipeline:
             self.stats_history, save_path=str(confidences_path)
         )
 
-
     def run(self, running_in_notebook: bool = False):
         logging.info("Starting accent detection pipeline")
         try:
@@ -93,6 +90,7 @@ class AccentDetectionPipeline:
 if __name__ == "__main__":
     # Run the pipeline via command line
     from storage.mock_bucket import MockBucket
+
     logging.basicConfig(level=logging.DEBUG)
     bucket = MockBucket("./mock_bucket")
     dao = BucketDAO(bucket)
