@@ -175,3 +175,5 @@ cython_debug/
 data/
 mock_bucket/
 wav2vec2_checkpoints/
+# ignore virtual env
+venv/
