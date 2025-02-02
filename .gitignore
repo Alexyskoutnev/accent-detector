@@ -174,3 +174,4 @@ cython_debug/
 **/data/
 data/
 mock_bucket/
+wav2vec2_checkpoints/

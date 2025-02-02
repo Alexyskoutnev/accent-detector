@@ -1,12 +1,12 @@
 from pathlib import Path
 import logging
 from typing import Any, Iterable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class BucketDAO:
     def __init__(self, 
-                 bucket: Any, # Can be a mock or real bucket object
+                 bucket: Any, # Can be a mock or real S3 bucket object
                  max_workers: int = 16,
                  chunk_size: int = 100):
         self._bucket = bucket
@@ -21,7 +21,7 @@ class BucketDAO:
                 for local_path, key in chunk:
                     future = executor.submit(self._upload_single, local_path, key)
                     futures.append(future)
-                for future in futures:
+                for future in as_completed(futures):
                     try:
                         future.result()
                     except Exception as e:
@@ -42,7 +42,7 @@ class BucketDAO:
                 for key, local_path in chunk:
                     future = executor.submit(self._download_single, key, local_path)
                     futures.append(future)
-                for future in futures:
+                for future in as_completed(futures):
                     try:
                         future.result()
                     except Exception as e:
@@ -112,7 +112,7 @@ class BucketDAO:
                 for key in chunk:
                     future = executor.submit(self._get_object_content, key)
                     futures.append(future)
-                for future in futures:
+                for future in as_completed(futures):
                     try:
                         content = future.result()
                         if content:

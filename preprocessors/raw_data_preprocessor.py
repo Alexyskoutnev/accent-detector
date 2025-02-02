@@ -38,36 +38,38 @@ class RawDataPreprocessor:
         return cls._verify_csv(df)
 
     @classmethod
-    def _convert_batch_to_wav(cls, 
-                            batch_bytes: list[bytes]
-                            ) -> list[torch.Tensor]:
+    def _convert_batch_to_wav(cls, batch_bytes: list[bytes]) -> tuple[torch.Tensor, torch.Tensor]:
         results = []
+        wav_lens = []
+
         for mp3_bytes in batch_bytes:
             with tempfile.NamedTemporaryFile(suffix=cls.valid_audio_extension, delete=False) as tmp_file:
                 tmp_file.write(mp3_bytes)
                 tmp_path = tmp_file.name
+
             try:
                 waveform, sample_rate = torchaudio.load(tmp_path)
-                # Put on GPU if available
-                # waveform = waveform
+                resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=cls.target_sample_rate).to(cls.device)
+                if waveform.shape[0] > 1:
+                    waveform = torch.mean(waveform, dim=0, keepdim=True)
+                waveform = waveform.to(cls.device)
                 if sample_rate != cls.target_sample_rate:
-                    resampler = torchaudio.transforms.Resample(sample_rate, cls.target_sample_rate)
-                    # log
-                    logging.info(f"Resampling {tmp_path} from {sample_rate} to {cls.target_sample_rate}")
                     waveform = resampler(waveform)
-                    logging.info(f"Now shape is {waveform.shape}")
-                    sample_rate = cls.target_sample_rate
-                results.append(waveform)
+                results.append(waveform.squeeze(0))
+                wav_lens.append(waveform.shape[1])
             finally:
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
-        return results
+                os.remove(tmp_path)
+        max_length = max(wav_lens)
+        padded_waveforms = [torch.nn.functional.pad(w, (0, max_length - w.shape[0])) for w in results]
+        wav_tensor = torch.stack(padded_waveforms).to(cls.device)
+        wav_lens_tensor = torch.tensor([l / max_length for l in wav_lens], dtype=torch.float32).to(cls.device)
+        return wav_tensor, wav_lens_tensor
 
     @classmethod
     def _get_batch_audio(cls, 
                         bucket_dao: BucketDAO, 
                         file_names: list[str]
-                        ) -> list[torch.Tensor]:
+                        ) -> tuple[torch.Tensor, torch.Tensor]:
         audio_bytes = list(bucket_dao.read(file_names))
         return cls._convert_batch_to_wav(audio_bytes)
 
@@ -92,15 +94,18 @@ class RawDataPreprocessor:
     @classmethod
     def process(cls, 
                bucket_dao: BucketDAO
-               ) -> Generator[tuple[torch.Tensor, pd.Series], None, None]:
+               ) -> Generator[tuple[tuple[torch.Tensor, torch.Tensor], list[pd.Series]], None, None]:
         raw_csv_df = cls._get_csv(bucket_dao)
         for batch_rows, batch_paths in cls._iterate_batches(raw_csv_df):
-            batch_tensor = cls._get_batch_audio(bucket_dao, batch_paths)
-            yield batch_tensor, batch_rows
+            batch_tensor, batch_lens = cls._get_batch_audio(bucket_dao, batch_paths)
+            yield (batch_tensor, batch_lens), batch_rows
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     bucket = MockBucket("./mock_bucket")
     dao = BucketDAO(bucket)
-    RawDataPreprocessor.process(dao)
+    for batch_tensor, batch_row in RawDataPreprocessor.process(dao):
+        print(batch_tensor)
+        print(batch_row)
+        break
     
