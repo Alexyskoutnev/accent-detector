@@ -9,7 +9,7 @@ class BucketDAO:
                  bucket: Any, # Can be a mock or real bucket object
                  max_workers: int = 16,
                  chunk_size: int = 100):
-        self.bucket = bucket
+        self._bucket = bucket
         self.max_workers = max_workers # tunable based on hardware constraints
         self.chunk_size = chunk_size # tunable based on network constraints
 
@@ -29,7 +29,7 @@ class BucketDAO:
 
     def _upload_single(self, local_path: str | Path, key: str):
         try:
-            self.bucket.upload_file(str(local_path), key)
+            self._bucket.upload_file(str(local_path), key) # In production, this would be a call to the S3 API
         except Exception as e:
             logging.error(f"Failed to upload {local_path} to {key}: {e}")
             raise
@@ -50,7 +50,7 @@ class BucketDAO:
 
     def _download_single(self, key: str, local_path: str | Path):
         try:
-            self.bucket.download_file(key, str(local_path))
+            self._bucket.download_file(key, str(local_path))  # In production, this would be a call to the S3 API
         except Exception as e:
             logging.error(f"Failed to download {key} to {local_path}: {e}")
             raise
@@ -82,7 +82,7 @@ class BucketDAO:
                      patterns: list[str] = None):
         local_dir = Path(local_dir)
         local_dir.mkdir(parents=True, exist_ok=True)
-        response = self.bucket.list_objects(prefix=prefix)
+        response = self._bucket.list_objects(prefix=prefix)  # In production, this would be a call to the S3 API
         download_tasks = []
         for obj in response.get('Contents', []):
             key = obj['Key']
@@ -96,7 +96,7 @@ class BucketDAO:
 
     def _get_object_content(self, key: str) -> bytes | None:
         try:
-            response = self.bucket.get_object(key)
+            response = self._bucket.get_object(key)  # In production, this would be a call to the S3 API
             content = response['Body'].read()
             response['Body'].close()
             return content
@@ -119,14 +119,3 @@ class BucketDAO:
                             yield content
                     except Exception as e:
                         logging.error(f"Content retrieval failed: {e}")
-
-if __name__ == "__main__":
-    from storage.mock_bucket import MockBucket
-
-    bucket = MockBucket("./mock_bucket")
-    raw_data = Path("data")
-    bucket_dao = BucketDAO(bucket)
-    bucket_dao.upload_dir(str(raw_data), "raw_data")
-    bucket_dao.download_dir("raw_data", "test")
-    breakpoint()
-    preprocessor = RawDataPreProcessor(bucket_dao, inmem_dao)
