@@ -120,3 +120,13 @@ Execute the pipeline directly via command line:
 python ./pipeline/accent_detection_pipeline.py
 ```
 ## Results
+ 
+### Model Classification Performance 
+The model achieved an accuracy of 99.91%, which is unsurprising given that there were only two possible misclassification cases. These occurred when the model encountered real Filipino speakers with Filipino accents. Because the model failed to classify these two speakers correctly, the recall value was significantly impacted.
+![Alt text](results/metrics_history_20250202_184105.png)
+### Confusion Matrix
+The XLSR model misclassified both true Filipino accent labels as not having a Filipino accent. However, since Filipino accents represented only 0.092% of the inference dataset, the model likely requires more positive samples to improve classification accuracy. Further true positive Filipino accents are needed to determine the issue with the model. 
+![Alt text](results/confusion_matrix_20250202_184105.png)
+### Model Confidence Over Time
+Overall, the model exhibited high confidence in its predictions, with an average confidence score of 94.54%. However, 346 predictions had lower confidence, which may indicate uncertainty in distinguishing accent labels. Further evaluation is necessary to assess the model’s robustness when matching specific accent categories.
+![Alt text](results/confidence_over_time_20250202_184105.png)
