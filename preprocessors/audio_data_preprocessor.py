@@ -78,12 +78,8 @@ class AudioDataPreprocessor:
             try:
                 # We convert the mp3 to a wav tile to take advantage of batching processing for the xlsr model
                 waveform, sample_rate = torchaudio.load(tmp_path)
-                resampler = torchaudio.transforms.Resample(
-                    orig_freq=sample_rate, new_freq=cls.target_sample_rate
-                ).to(cls.device)
+                resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=cls.target_sample_rate).to(cls.device)
                 # "warisqr7/accent-id-commonaccent_xlsr-en-english" model requires mono-channel audio and 16kHz sample rate
-                if waveform.shape[0] > 1:
-                    waveform = torch.mean(waveform, dim=0, keepdim=True)
                 waveform = waveform.to(cls.device)
                 if sample_rate != cls.target_sample_rate:
                     waveform = resampler(waveform)
@@ -94,14 +90,10 @@ class AudioDataPreprocessor:
         # getting the max length of the waveforms in the batch
         max_length = max(wav_lens)
         # We pad the waveforms to the same length to create a batch
-        padded_waveforms = [
-            torch.nn.functional.pad(w, (0, max_length - w.shape[0])) for w in results
-        ]
+        padded_waveforms = [torch.nn.functional.pad(w, (0, max_length - w.shape[0])) for w in results]
         wav_tensor = torch.stack(padded_waveforms).to(cls.device)
         # We normalize the lengths to be between 0 and 1 based on the max length in the batch (the xmlr model requires this)
-        wav_lens_tensor = torch.tensor(
-            [l / max_length for l in wav_lens], dtype=torch.float32
-        ).to(cls.device)
+        wav_lens_tensor = torch.tensor([l / max_length for l in wav_lens], dtype=torch.float32).to(cls.device)
         return wav_tensor, wav_lens_tensor
 
     @classmethod

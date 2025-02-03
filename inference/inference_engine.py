@@ -112,9 +112,7 @@ class InferenceEngine:
                 # score: Confidence score
                 # index: Numerical class label
                 # text_lab: Textual class label
-                out_prob, score, index, text_lab = self.model.classify_batch(
-                    *audio_tensors
-                )
+                out_prob, score, index, text_lab = self.model.classify_batch(*audio_tensors)
                 confidence_flags = self._flag_low_model_confidence(score)
                 low_conf_count = confidence_flags.sum().item()
                 if low_conf_count > 0:

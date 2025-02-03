@@ -70,7 +70,7 @@ class EvalStats:
             f"Average Confidence Score: {self.average_confidence_score:.3f}\n"
             f"Precision: {'N/A' if isinstance(self.precision, int) else f'{self.precision:.2%}'}\n"
             f"Recall: {'N/A' if isinstance(self.recall, int) else f'{self.recall:.2%}'}\n"
-            f"F1 Score: {'N/A' if isinstance(self.f1_score, int) else f'{self.f1_score:.2%}'}"
+            f"F1 Score: {'N/A' if isinstance(self.f1_score, int) else f'{self.f1_score:.2%}'}\n"
             f"Class Distribution:\n"
             f"Filipino Accents: {self.total_filipino_accents}/{self.total}\n"
             f"Non-Filipino Accents: {self.total_non_filipino_accents}/{self.total}\n"
@@ -109,7 +109,7 @@ class AccentEvaluator:
     """
 
     _running_stats: ClassVar[EvalStats] = EvalStats()
-    target_accent: ClassVar[str] = "filipino"
+    target_accents: ClassVar[set[str]] = ["filipino", "tagalog", "philippines"] # Filipino accents
 
     @classmethod
     def _evaluate_prediction(
@@ -159,7 +159,7 @@ class AccentEvaluator:
     @classmethod
     def _is_target_accent(cls, file_name: str) -> bool:
         native_language = re.sub(r"[^a-zA-Z\s]", "", file_name)
-        return native_language.lower() == cls.target_accent.lower()
+        return any(accent in native_language.lower() for accent in cls.target_accents)
 
     @classmethod
     def _create_batch_stats(
