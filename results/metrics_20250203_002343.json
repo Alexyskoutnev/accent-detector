@@ -1,0 +1,17 @@
+{
+    "total": 2138,
+    "correct": 2088,
+    "incorrect": 50,
+    "accuracy": 0.9766136576239476,
+    "true_positives": 2,
+    "false_positives": 32,
+    "true_negatives": 2086,
+    "false_negatives": 18,
+    "precision": 0.058823529411764705,
+    "recall": 0.1,
+    "f1_score": 0.07407407407407408,
+    "total_filipino_accent": 20,
+    "total_non_filipino_accent": 2118,
+    "average_confidence_score": 0.9454279557023794,
+    "low_confidence_count": 346
+}

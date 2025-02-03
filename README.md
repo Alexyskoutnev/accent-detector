@@ -122,11 +122,12 @@ python ./pipeline/accent_detection_pipeline.py
 ## Results
  
 ### Model Classification Performance 
-The model achieved an accuracy of 99.91%, which is unsurprising given that there were only two possible misclassification cases. These occurred when the model encountered real Filipino speakers with Filipino accents. Because the model failed to classify these two speakers correctly, the recall value was significantly impacted.
-![Alt text](results/metrics_history_20250202_184105.png)
+The model achieved 97.66% accuracy, primarily due to the highly imbalanced dataset (2,118 non-Filipino vs 20 Filipino speakers). However, the key metric F1 score is very low at 0.07, stemming from poor precision (0.059) and recall (0.100) in identifying Filipino accents.
+This indicative that the model had a poor understanding of what is a filipino accent and further finetuning/retraining updates are required. 
+![Alt text](results/metrics_history_20250203_002343.png)
 ### Confusion Matrix
-The XLSR model misclassified both true Filipino accent labels as not having a Filipino accent. However, since Filipino accents represented only 0.092% of the inference dataset, the model likely requires more positive samples to improve classification accuracy. Further true positive Filipino accents are needed to determine the issue with the model. 
-![Alt text](results/confusion_matrix_20250202_184105.png)
+The XLSR model correctly identified only 2 Filipino accents out of 20 total cases. It produced 32 false positives and 18 false negatives, indicating significant challenges in accent classification. The high number of false positives suggests the model tends to overpredict Filipino accents.
+![Alt text](results/confusion_matrix_20250203_002343.png)
 ### Model Confidence Over Time
-Overall, the model exhibited high confidence in its predictions, with an average confidence score of 94.54%. However, 346 predictions had lower confidence, which may indicate uncertainty in distinguishing accent labels. Further evaluation is necessary to assess the model’s robustness when matching specific accent categories.
-![Alt text](results/confidence_over_time_20250202_184105.png)
+Despite poor classification performance, the model showed high average confidence (94.54%). However, 346 predictions had lower confidence scores, suggesting potential uncertainty in accent discrimination. 
+![Alt text](results/confidence_over_time_20250203_002343.png)
